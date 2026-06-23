@@ -1,0 +1,680 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>工具2 Demo · 智能选品 · 提词 · 算账</title>
+  <style>
+    :root{
+      --ink:#17323a;
+      --soft:#50666d;
+      --muted:#7b8d93;
+      --paper:#f2eee7;
+      --surface:#ffffff;
+      --line:#e4d9c8;
+      --line2:#efe7dc;
+      --amber:#cf860f;
+      --amber-deep:#6b4406;
+      --amber-bg:#fbeac9;
+      --green:#5e8f2a;
+      --green-bg:#eaf2de;
+      --petrol:#0f6e78;
+      --danger:#c0392b;
+      --purple:#6258c4;
+      --shadow:0 18px 42px rgba(88,56,18,.12);
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      min-width:1200px;
+      background:var(--paper);
+      color:var(--ink);
+      font-family:"PingFang SC","Hiragino Sans GB","Microsoft YaHei",system-ui,sans-serif;
+      line-height:1.58;
+    }
+    button,input,select,textarea{font:inherit}
+    .app{display:grid;grid-template-columns:254px 1fr;min-height:100vh}
+    .side{
+      background:#2d261b;
+      color:#f7ead8;
+      padding:26px 18px;
+      position:sticky;
+      top:0;
+      height:100vh;
+    }
+    .brand{font-weight:900;font-size:20px;line-height:1.25}
+    .brand small{display:block;margin-top:8px;color:#cfb995;font-size:10px;letter-spacing:.16em}
+    .nav{margin-top:32px;display:grid;gap:7px}
+    .nav button{
+      border:0;border-radius:10px;background:transparent;color:#d1b88e;
+      text-align:left;padding:12px 12px;cursor:pointer;font-weight:800;font-size:13px;
+    }
+    .nav button.active,.nav button:hover{background:#5a3f18;color:#fff}
+    .side-note{
+      position:absolute;left:18px;right:18px;bottom:22px;
+      border-top:1px solid rgba(255,255,255,.16);padding-top:14px;
+      color:#dbc8a7;font-size:12px;
+    }
+    .main{padding:26px 34px 40px}
+    .top{display:flex;align-items:flex-start;justify-content:space-between;gap:24px;margin-bottom:18px}
+    .eyebrow{font-size:11px;letter-spacing:.16em;color:var(--amber);font-weight:900;text-transform:uppercase}
+    h1{margin:6px 0 4px;font-size:30px;color:#2d261b;letter-spacing:0}
+    .sub{font-size:13px;color:var(--soft)}
+    .customer-card{
+      background:var(--surface);border:1px solid var(--line);border-radius:14px;
+      padding:13px 16px;min-width:330px;box-shadow:0 10px 24px rgba(88,56,18,.06);
+      font-size:12px;color:var(--soft);
+    }
+    .customer-card b{display:block;color:#2d261b;font-size:15px;margin-bottom:3px}
+    .summary-line{margin-top:8px;display:flex;flex-wrap:wrap;gap:6px}
+    .pill{border-radius:999px;background:#fff6e8;color:#7a4b09;border:1px solid #ead4ad;padding:3px 8px;font-size:11px;font-weight:800}
+    .flow{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-bottom:18px}
+    .step{
+      background:#fff;border:1px solid var(--line);border-radius:13px;padding:10px;min-height:82px;cursor:pointer;
+    }
+    .step.active{border-color:var(--amber);box-shadow:0 8px 18px rgba(207,134,15,.16)}
+    .step b{display:block;font-size:12px;color:#2d261b}
+    .step span{display:block;margin-top:5px;font-size:11px;color:var(--muted)}
+    .view{display:none}.view.active{display:block}
+    .layout{display:grid;grid-template-columns:1.18fr .82fr;gap:18px}
+    .wide-layout{display:grid;grid-template-columns:1fr;gap:18px}
+    .panel{
+      background:var(--surface);border:1px solid #eadfce;border-radius:16px;padding:19px;box-shadow:var(--shadow);
+    }
+    .panel.flat{box-shadow:none}
+    .panel h2{margin:0 0 5px;font-size:18px;color:#2d261b}
+    .hint{margin:0 0 15px;font-size:12px;color:var(--muted)}
+    .section-title{margin:16px 0 8px;color:#6d5b44;font-size:11px;font-weight:900;letter-spacing:.08em;text-transform:uppercase}
+    .source-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px}
+    .source{
+      border:1px solid var(--line);border-radius:13px;background:#fff;padding:13px;cursor:pointer;min-height:102px;position:relative;
+    }
+    .source.selected{border-color:var(--amber);background:#fffaf1}
+    .source b{display:block;font-size:14px;color:#2d261b;margin-bottom:5px}
+    .source span{font-size:12px;color:var(--soft)}
+    .badge{display:inline-block;border-radius:999px;padding:2px 7px;font-size:10px;font-weight:900;margin-top:8px;background:#f4e8d5;color:#754b10}
+    .badge.future{background:#eef1fa;color:#37316d}
+    .field-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+    .field{display:flex;flex-direction:column;gap:6px}
+    .field label{font-size:11px;color:var(--muted);font-weight:900}
+    .field input,.field select{
+      border:1px solid var(--line);border-radius:10px;padding:10px 11px;color:var(--ink);outline:none;background:#fff;
+    }
+    .field input:focus,.field select:focus,textarea:focus{border-color:var(--amber)}
+    .seg-row{display:flex;flex-wrap:wrap;gap:8px}
+    .seg{
+      border:1px solid var(--line);background:#fff;color:var(--soft);border-radius:999px;padding:8px 12px;
+      font-size:12px;font-weight:800;cursor:pointer;
+    }
+    .seg.selected{border-color:var(--amber);background:#fff5e2;color:var(--amber-deep)}
+    .actions{display:flex;gap:9px;align-items:center;flex-wrap:wrap;margin-top:16px}
+    .action{border:0;border-radius:10px;background:var(--amber);color:#fff;padding:10px 14px;font-weight:900;font-size:12px;cursor:pointer}
+    .outline{border:1px solid var(--amber);border-radius:10px;background:#fff;color:var(--amber-deep);padding:9px 13px;font-weight:900;font-size:12px;cursor:pointer}
+    .ghost{border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--soft);padding:9px 13px;font-weight:900;font-size:12px;cursor:pointer}
+    .note{border-left:3px solid var(--amber);background:#fff9ef;border-radius:0 12px 12px 0;padding:12px 14px;color:#63491d;font-size:12.5px;line-height:1.7}
+    .summary-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .summary{border:1px solid #efe2ce;background:#fffaf4;border-radius:12px;padding:12px;min-height:78px}
+    .summary .k{font-size:11px;color:var(--muted);font-weight:900}.summary .v{font-size:13px;color:#2d261b;margin-top:5px;font-weight:800}
+    .ocr-box{display:none;border:1px solid #eadfce;border-radius:14px;background:#fffaf4;padding:14px;margin-top:12px}
+    .ocr-box.show{display:block}
+    .ocr-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+    .ocr-head b{font-size:13px;color:#2d261b}.ocr-head span{font-size:11px;color:var(--green);font-weight:900}
+    .confidence{height:8px;border-radius:999px;background:#efe4d5;overflow:hidden;margin-top:6px}.confidence i{display:block;height:100%;background:var(--green);width:92%}
+    .risk-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+    .risk-card{border:1px solid var(--line);border-radius:14px;background:#fff;padding:15px}
+    .risk-card h3{margin:0 0 9px;font-size:15px;color:#2d261b}
+    .risk-list{display:grid;gap:8px}
+    .risk{display:grid;grid-template-columns:26px 1fr;gap:9px;align-items:start;border-bottom:1px solid #f0e8dd;padding-bottom:8px}
+    .risk:last-child{border-bottom:0;padding-bottom:0}
+    .risk .icon{width:24px;height:24px;border-radius:50%;display:grid;place-items:center;font-size:12px;font-weight:900}
+    .risk.reject .icon{background:#fbecea;color:var(--danger)}
+    .risk.keep .icon{background:var(--green-bg);color:#2c4a0f}
+    .risk b{font-size:13px;color:#2d261b}.risk span{display:block;font-size:12px;color:var(--soft);margin-top:2px}
+    .filter-log{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:14px}
+    .log{background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px}.log b{font-size:22px;color:#2d261b}.log span{display:block;font-size:11px;color:var(--muted)}
+    .reco-grid{display:grid;grid-template-columns:1.15fr .85fr;gap:18px}
+    .cards{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+    .glass-card{border:1px solid var(--line);border-radius:15px;background:#fff;padding:13px;cursor:pointer;position:relative;min-height:222px}
+    .glass-card.selected{border-color:var(--amber);box-shadow:0 10px 22px rgba(207,134,15,.13)}
+    .score{position:absolute;right:12px;top:12px;background:#fff5e2;color:var(--amber-deep);border:1px solid #ead4ad;border-radius:999px;padding:3px 8px;font-size:11px;font-weight:900}
+    .glass-img{height:72px;border-radius:12px;background:linear-gradient(135deg,#fffaf2,#f0dcc0);margin-bottom:11px;display:grid;place-items:center;overflow:hidden}
+    .glasses{position:relative;width:118px;height:34px}
+    .glasses:before,.glasses:after{content:"";position:absolute;top:3px;width:42px;height:25px;border:4px solid #2d261b;border-radius:11px;opacity:.76}
+    .glasses:before{left:4px}.glasses:after{right:4px}
+    .glasses i{position:absolute;left:51px;right:51px;top:15px;height:4px;background:#2d261b;opacity:.76;border-radius:4px}
+    .glass-card h3{margin:0 58px 4px 0;font-size:15px;color:#2d261b}
+    .meta{display:flex;flex-wrap:wrap;gap:5px;margin:7px 0}.meta span{background:#f5eee4;color:#6b583f;border-radius:999px;padding:3px 7px;font-size:10px;font-weight:900}
+    .glass-card p{margin:0;font-size:12px;color:var(--soft);line-height:1.65}
+    .card-actions{display:flex;gap:7px;margin-top:11px}.card-actions button{border:1px solid var(--line);background:#fff;border-radius:9px;color:#6b583f;font-size:11px;font-weight:900;padding:7px 8px;cursor:pointer}.card-actions button:hover{border-color:var(--amber);background:#fffaf2}
+    .feedback-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:18px;margin-top:18px}
+    .compare-head{display:flex;align-items:center;justify-content:space-between;gap:10px}.compare-head small{font-size:11px;color:var(--muted);font-weight:800}
+    .compare-tray{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:12px}
+    .compare-slot{border:1px dashed #dfc6a3;border-radius:13px;background:#fffaf4;min-height:126px;padding:12px;display:flex;flex-direction:column;justify-content:center;color:#8a7458;font-size:12px;line-height:1.55}
+    .compare-slot b{color:#2d261b;font-size:13px}.compare-slot .cp-price{font-size:18px;font-weight:900;color:#2d261b;margin:4px 0}.compare-slot .cp-meta{font-size:11px;color:var(--soft)}.compare-slot .remove{margin-top:8px;border:0;background:transparent;color:var(--danger);font-size:11px;font-weight:900;cursor:pointer;text-align:left;padding:0}
+    .exclude-log{display:grid;gap:8px;margin-top:12px}.exclude-item{border:1px solid #f0e0c9;border-radius:11px;background:#fffaf4;padding:10px 11px;font-size:12px;color:var(--soft);display:flex;justify-content:space-between;gap:10px}.exclude-item b{color:#2d261b}.exclude-item span{color:var(--amber-deep);font-weight:900}
+    .exclude-sheet{display:none;margin-top:12px;border:1px solid #ead4ad;border-radius:14px;background:#fffaf2;padding:13px}.exclude-sheet.show{display:block}.exclude-sheet b{display:block;font-size:13px;color:#2d261b;margin-bottom:8px}.reason-buttons{display:flex;gap:8px;flex-wrap:wrap}.reason-buttons button{border:1px solid #dfc6a3;background:#fff;border-radius:999px;padding:7px 10px;font-size:11px;font-weight:900;color:#6b583f;cursor:pointer}.reason-buttons button:hover{border-color:var(--amber);color:var(--amber-deep)}
+    @media(max-width:860px){.feedback-grid{grid-template-columns:1fr}.compare-tray{grid-template-columns:1fr}}
+    .detail{position:sticky;top:24px}
+    .detail h3{margin:0 0 8px;font-size:17px;color:#2d261b}.detail .price{font-size:28px;color:#2d261b;font-weight:900}.detail .price small{font-size:12px;color:var(--muted);font-weight:800;margin-left:4px}
+    .detail-row{display:grid;grid-template-columns:92px 1fr;gap:8px;border-top:1px solid #f0e6d8;padding:9px 0;font-size:12.5px}.detail-row b{color:#6a573e}.detail-row span{color:#2d261b;font-weight:700}
+    .compare{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+    .plan{border:1px solid var(--line);border-radius:15px;background:#fff;padding:15px;min-height:260px;position:relative}
+    .plan.recommend{border-color:var(--amber);background:#fffaf2}.plan.budget{border-color:var(--green);background:#fbfdf8}.plan.upgrade{border-color:#cbc5ef;background:#fbfaff}
+    .plan .tagtop{display:inline-block;border-radius:999px;padding:3px 8px;font-size:10px;font-weight:900;margin-bottom:9px;background:#f2e6d6;color:#6b4406}
+    .plan h3{margin:0 0 8px;font-size:16px;color:#2d261b}.plan .money{font-size:30px;font-weight:900;color:#2d261b;margin:5px 0}.plan p{font-size:12.2px;color:var(--soft);line-height:1.7;margin:0}.plan ul{list-style:none;padding:0;margin:12px 0 0;display:grid;gap:6px}.plan li{font-size:12px;color:var(--soft);padding-left:17px;position:relative}.plan li:before{content:"›";position:absolute;left:0;color:var(--amber);font-weight:900}
+    .explain{margin-top:14px;border:1px dashed var(--amber);border-radius:14px;background:#fff;padding:14px;color:#63491d;font-size:12.5px;line-height:1.7}
+    .talk-grid{display:grid;grid-template-columns:1fr .9fr;gap:18px}
+    .talk-tabs{display:flex;gap:7px;border-bottom:1px solid var(--line);margin-bottom:13px}
+    .talk-tabs button{border:0;background:transparent;border-bottom:2px solid transparent;color:var(--muted);padding:9px 5px;cursor:pointer;font-size:12px;font-weight:900}
+    .talk-tabs button.active{border-bottom-color:var(--amber);color:#2d261b}
+    textarea{width:100%;border:1px solid #e7d9c5;border-radius:12px;background:#fffaf4;padding:14px;color:#243f45;resize:vertical;min-height:312px;outline:none;font-size:13px;line-height:1.8}
+    .scenario-list{display:grid;gap:9px}.scenario{border:1px solid var(--line);border-radius:12px;background:#fff;padding:12px;cursor:pointer}.scenario.active{border-color:var(--amber);background:#fffaf2}.scenario b{display:block;font-size:13px;color:#2d261b}.scenario span{font-size:12px;color:var(--soft)}
+    .close-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+    .result-card{border:1px solid var(--line);border-radius:16px;background:#fff;padding:18px;min-height:360px}
+    .result-card h3{margin:0 0 8px;font-size:18px;color:#2d261b}.result-card p{margin:0 0 12px;font-size:12.5px;color:var(--soft);line-height:1.7}
+    .receipt{border:1px solid #efe2ce;border-radius:14px;background:#fffaf4;padding:14px;margin-top:13px}.receipt .r{display:flex;justify-content:space-between;border-bottom:1px solid #f0e8dc;padding:8px 0;font-size:12px}.receipt .r:last-child{border-bottom:0}.receipt b{color:#2d261b}.receipt span{color:var(--soft)}
+    .wechat-card{border:1px solid #cfe1cd;border-radius:14px;background:#f9fdf6;padding:14px;margin-top:13px}.wechat-card b{display:block;color:#2c4a0f;margin-bottom:8px}.wechat-card .item{border-bottom:1px solid #e3efdf;padding:8px 0}.wechat-card .item:last-child{border-bottom:0}.wechat-card .item h4{margin:0;font-size:13px;color:#2d261b}.wechat-card .item span{font-size:12px;color:var(--soft)}
+    .toast{position:fixed;right:28px;bottom:24px;background:#2d261b;color:#fff;border-radius:10px;padding:12px 15px;font-size:12px;opacity:0;transform:translateY(10px);transition:.18s;z-index:20}.toast.show{opacity:1;transform:none}
+  </style>
+</head>
+<body>
+<div class="app">
+  <aside class="side">
+    <div class="brand">工具2<br>智能选品 · 提词 · 算账<small>IN-STORE SALES DEMO</small></div>
+    <nav class="nav">
+      <button class="active" data-view="profile">01 验光与诉求</button>
+      <button data-view="filter">02 规则过滤</button>
+      <button data-view="recommend">03 推荐 5 副</button>
+      <button data-view="pricing">04 智能算账</button>
+      <button data-view="talk">05 话术提词</button>
+      <button data-view="close">06 成交留存</button>
+    </nav>
+    <div class="side-note">真实场景：高度近视、预算有限的大学生。<br>目标：3 分钟完成专业推荐、算账与留存。</div>
+  </aside>
+
+  <main class="main">
+    <div class="top">
+      <div>
+        <div class="eyebrow">Demo · 工具2 · 成交</div>
+        <h1 id="pageTitle">验光数据与基础诉求</h1>
+        <div id="pageSub" class="sub">导购只补充少量关键输入，系统用规则和库存完成专业推荐。</div>
+      </div>
+      <div class="customer-card">
+        当前客户
+        <b id="custName">客户 A-0421 · 大学生</b>
+        <span id="custDesc">高度近视｜¥800–1200｜上学/网课｜轻薄不显厚</span>
+        <div class="summary-line" id="summaryPills"></div>
+      </div>
+    </div>
+
+    <div class="flow">
+      <div class="step active" data-step="profile"><b>验光与诉求</b><span>手输 / 设备 / 拍照，价位、场景、核心偏好</span></div>
+      <div class="step" data-step="filter"><b>规则过滤</b><span>高度近视风险、库存、预算、镜框尺寸</span></div>
+      <div class="step" data-step="recommend"><b>推荐 5 副</b><span>货位、理由、套餐、试戴反馈</span></div>
+      <div class="step" data-step="pricing"><b>智能算账</b><span>推荐方案、预算内方案、升级方案</span></div>
+      <div class="step" data-step="talk"><b>话术提词</b><span>需求、专业、价格、异议处理</span></div>
+      <div class="step" data-step="close"><b>成交留存</b><span>订单绑定或电子试戴清单</span></div>
+    </div>
+
+    <section id="profile" class="view active">
+      <div class="layout">
+        <div class="panel">
+          <h2>01 · 验光数据来源</h2>
+          <p class="hint">第一版可先支持手动输入；电子导入和拍照导入作为未来能力展示。拍照识别结果必须人工确认后才能进入推荐。</p>
+          <div class="source-grid">
+            <div class="source selected" data-source="manual"><b>手动输入</b><span>导购或验光师录入球镜、柱镜、轴位、瞳距。</span><div class="badge">MVP 可做</div></div>
+            <div class="source" data-source="device"><b>电子验光单导入</b><span>从 ERP / 验光设备同步本次验光数据。</span><div class="badge future">后续接入</div></div>
+            <div class="source" data-source="photo"><b>拍照识别导入</b><span>拍纸质验光单，OCR 识别后人工确认。</span><div class="badge future">未来能力</div></div>
+          </div>
+          <div class="ocr-box" id="ocrBox">
+            <div class="ocr-head"><b>拍照识别结果 · 待人工确认</b><span>整体置信度 92%</span></div>
+            <div class="note">系统已识别右眼 -8.00D、左眼 -7.75D、散光 -1.00、瞳距 62mm。低置信度字段会高亮，需导购或验光师确认后生效。</div>
+            <div class="confidence"><i></i></div>
+          </div>
+
+          <div class="section-title">验光数据</div>
+          <div class="field-row">
+            <div class="field"><label>右眼球镜 SPH</label><input id="rSph" value="-8.00D"></div>
+            <div class="field"><label>左眼球镜 SPH</label><input id="lSph" value="-7.75D"></div>
+            <div class="field"><label>散光 CYL</label><input id="cyl" value="-1.00D"></div>
+            <div class="field"><label>瞳距 PD</label><input id="pd" value="62mm"></div>
+          </div>
+
+          <div class="section-title">整单预期价位段</div>
+          <div class="seg-row" data-group="budget"></div>
+
+          <div class="section-title">用眼场景，最多选 2 个</div>
+          <div class="seg-row" data-group="scene"></div>
+
+          <div class="section-title">核心偏好，最多选 2 个</div>
+          <div class="seg-row" data-group="preference"></div>
+
+          <div class="actions">
+            <button class="action" id="startFilter">确认信息，开始智能过滤</button>
+            <button class="outline" id="simulatePhoto">模拟拍照导入</button>
+            <button class="ghost" id="resetDemo">恢复示例客户</button>
+          </div>
+        </div>
+
+        <div class="panel">
+          <h2>导购只需要点几下</h2>
+          <p class="hint">第一屏只保留“价位段、用眼场景、核心偏好”三类输入，避免过度打标。</p>
+          <div class="summary-grid">
+            <div class="summary"><div class="k">验光判断</div><div class="v" id="sumOptic">高度近视，需控制框型与镜片厚度</div></div>
+            <div class="summary"><div class="k">价位段</div><div class="v" id="sumBudget"></div></div>
+            <div class="summary"><div class="k">用眼场景</div><div class="v" id="sumScene"></div></div>
+            <div class="summary"><div class="k">核心偏好</div><div class="v" id="sumPreference"></div></div>
+          </div>
+          <div class="section-title">系统会自动做什么</div>
+          <div class="note">
+            系统不会问“是否接受平替”。进入报价阶段后，自动生成三类方案：专业匹配的推荐方案、尽量贴合价位段的预算内方案，以及预算可上浮时的升级方案。
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="filter" class="view">
+      <div class="panel">
+        <h2>02 · 硬性规则先过滤风险</h2>
+        <p class="hint">这一步让导购不再凭感觉选框。系统先过滤高度近视容易踩坑的商品，再进入推荐排序。</p>
+        <div class="risk-grid">
+          <div class="risk-card">
+            <h3>自动排除</h3>
+            <div class="risk-list">
+              <div class="risk reject"><div class="icon">×</div><div><b>超大框 / 大圆框</b><span>-8.00D 边缘厚度明显，重量和外观风险高。</span></div></div>
+              <div class="risk reject"><div class="icon">×</div><div><b>过重金属大框</b><span>容易压鼻梁，和“轻薄不显厚”诉求冲突。</span></div></div>
+              <div class="risk reject"><div class="icon">×</div><div><b>非现货 SKU</b><span>无法当场试戴，也不适合现场成交。</span></div></div>
+              <div class="risk reject"><div class="icon">×</div><div><b>低折射率镜片方案</b><span>厚度不符合高度近视场景，默认不作为主推。</span></div></div>
+            </div>
+          </div>
+          <div class="risk-card">
+            <h3>优先保留</h3>
+            <div class="risk-list">
+              <div class="risk keep"><div class="icon">✓</div><div><b>小框型 / 中小框型</b><span>减少边缘厚度，视觉效果更稳。</span></div></div>
+              <div class="risk keep"><div class="icon">✓</div><div><b>可配 1.67 / 1.74 镜片</b><span>根据价位段和厚度需求生成不同方案。</span></div></div>
+              <div class="risk keep"><div class="icon">✓</div><div><b>现货有货位</b><span>导购能快速拿到货，减少翻库存时间。</span></div></div>
+              <div class="risk keep"><div class="icon">✓</div><div><b>符合价位段或接近价位段</b><span>推荐不脱离顾客预期，同时保留解释空间。</span></div></div>
+            </div>
+          </div>
+        </div>
+        <div class="filter-log">
+          <div class="log"><b>126</b><span>门店在售镜架</span></div>
+          <div class="log"><b>58</b><span>规则过滤后</span></div>
+          <div class="log"><b>19</b><span>价位与场景匹配</span></div>
+          <div class="log"><b>5</b><span>最终推荐</span></div>
+        </div>
+        <div class="actions">
+          <button class="action" id="toRecommend">查看 5 副推荐</button>
+          <button class="outline" id="backProfile">返回修改输入</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="recommend" class="view">
+      <div class="reco-grid">
+        <div class="panel">
+          <h2>03 · 从现货库存中推荐 5 副</h2>
+          <p class="hint">卡片包含货位、匹配理由、套餐价和库存。“加入对比”会进入对比栏；“排除类似款”会记录原因并刷新推荐。</p>
+          <div class="cards" id="recoCards"></div>
+        </div>
+        <div class="panel detail" id="detailPanel">
+          <h2>当前选中款</h2>
+          <p class="hint">点击左侧镜架卡片，右侧同步更新推荐理由、报价和话术依据。</p>
+          <h3 id="detailName"></h3>
+          <div class="price" id="detailPrice"></div>
+          <div class="detail-row"><b>货位</b><span id="detailLoc"></span></div>
+          <div class="detail-row"><b>搭配镜片</b><span id="detailLens"></span></div>
+          <div class="detail-row"><b>库存</b><span id="detailStock"></span></div>
+          <div class="detail-row"><b>推荐理由</b><span id="detailReason"></span></div>
+          <div class="detail-row"><b>提醒</b><span id="detailWarn"></span></div>
+          <div class="actions">
+            <button class="action" id="toPricing">进入智能算账</button>
+            <button class="outline" id="detailCompare">加入对比</button>
+            <button class="outline" id="dislikeBtn">不喜欢这类</button>
+          </div>
+        </div>
+      </div>
+      <div class="feedback-grid">
+        <div class="panel" id="comparePanel">
+          <div class="compare-head"><h2>试戴对比栏</h2><small>最多加入 3 副</small></div>
+          <p class="hint">“加入对比”后会落到这里，导购可以拿给顾客横向解释厚度、价格和佩戴感，再进入算账页生成方案。</p>
+          <div class="compare-tray" id="compareTray"></div>
+          <div class="actions">
+            <button class="action" id="compareToPricing">用对比结果算账</button>
+            <button class="outline" id="clearCompare">清空对比</button>
+          </div>
+        </div>
+        <div class="panel" id="excludePanel">
+          <h2>试戴反馈 / 排除记录</h2>
+          <p class="hint">“排除类似款”不只是提示，它会记录原因并刷新推荐列表，让后续推荐更贴近顾客真实反馈。</p>
+          <div class="exclude-sheet" id="excludeSheet">
+            <b id="excludeTarget">选择排除原因</b>
+            <div class="reason-buttons">
+              <button data-reason="太大，容易显厚">太大，容易显厚</button>
+              <button data-reason="太重，压鼻梁">太重，压鼻梁</button>
+              <button data-reason="风格不喜欢">风格不喜欢</button>
+            </div>
+          </div>
+          <div class="exclude-log" id="excludeLog"></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="pricing" class="view">
+      <div class="panel">
+        <h2>04 · 智能算账：不问平替，自动给三档方案</h2>
+        <p class="hint">系统根据价位段与专业匹配，生成推荐方案、预算内备选和升级方案，导购不用现场乱算。</p>
+        <div class="compare">
+          <div class="plan recommend">
+            <span class="tagtop">推荐方案</span>
+            <h3 id="planRecoName">小方框钛架 + 1.74 镜片</h3>
+            <div class="money">¥1,180</div>
+            <p>专业匹配最稳：兼顾厚度、重量和外观，适合作为主推方案。</p>
+            <ul><li>厚度更可控</li><li>佩戴更轻</li><li>现货可试戴</li></ul>
+          </div>
+          <div class="plan budget">
+            <span class="tagtop">预算内备选</span>
+            <h3>TR90 小框 + 1.67 镜片</h3>
+            <div class="money">¥980</div>
+            <p>更贴近价位段，适合预算卡得紧时展示，但需要讲清厚度差异。</p>
+            <ul><li>预算更友好</li><li>轻量材质</li><li>边缘会略厚</li></ul>
+          </div>
+          <div class="plan upgrade">
+            <span class="tagtop">升级方案</span>
+            <h3>钛架 + 高端膜层 1.74</h3>
+            <div class="money">¥1,380</div>
+            <p>预算可上浮时展示，重点讲耐磨、防污和长期佩戴体验。</p>
+            <ul><li>售后更完整</li><li>膜层更耐用</li><li>长期佩戴更省心</li></ul>
+          </div>
+        </div>
+        <div class="explain" id="priceExplain">差价解释：多出的 ¥200 主要花在镜片折射率和镜架重量上。对 -8.00D 来说，这个差别会体现在边缘厚度、鼻梁负担和整体外观上。</div>
+        <div class="actions"><button class="action" id="toTalk">生成导购话术</button><button class="outline" id="copyQuote">复制报价说明</button></div>
+      </div>
+    </section>
+
+    <section id="talk" class="view">
+      <div class="talk-grid">
+        <div class="panel">
+          <h2>05 · AI 三行话术提词器</h2>
+          <p class="hint">不是长篇聊天，而是导购现场可以照着说的“三行话”。点不同场景，话术会切换。</p>
+          <div class="talk-tabs">
+            <button class="active" data-talk="need">需求确认</button>
+            <button data-talk="pro">专业解释</button>
+            <button data-talk="price">价格解释</button>
+            <button data-talk="objection">异议处理</button>
+          </div>
+          <textarea id="talkText"></textarea>
+          <div class="actions"><button class="outline" id="copyTalk">复制当前话术</button><button class="action" id="toClose">进入成交/留存</button></div>
+        </div>
+        <div class="panel">
+          <h2>顾客现场反馈</h2>
+          <p class="hint">导购不用自己想下一句，选择顾客反馈后，系统给出可解释、不过度承诺的话术。</p>
+          <div class="scenario-list">
+            <div class="scenario active" data-talk="need"><b>“我就想别太厚，别太贵。”</b><span>先共识核心诉求。</span></div>
+            <div class="scenario" data-talk="pro"><b>“为什么不能选大框？”</b><span>解释框型和镜片厚度关系。</span></div>
+            <div class="scenario" data-talk="price"><b>“这个比网上贵一点。”</b><span>讲清专业验配、现货试戴和售后。</span></div>
+            <div class="scenario" data-talk="objection"><b>“我回去再想想。”</b><span>生成电子试戴清单，留住二次跟进。</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="close" class="view">
+      <div class="close-grid">
+        <div class="result-card">
+          <h3>路径 A · 当场成交</h3>
+          <p>顾客确认推荐方案后，系统生成订单，并把验光数据、推荐 SKU、成交方案回写到客户档案。</p>
+          <div class="receipt">
+            <div class="r"><b>成交方案</b><span id="dealSku">A 区 3 排 · 小方框钛架</span></div>
+            <div class="r"><b>镜片方案</b><span>1.74 高折射率镜片</span></div>
+            <div class="r"><b>整单金额</b><span>¥1,180</span></div>
+            <div class="r"><b>档案回写</b><span>验光数据 / SKU / 价格 / 偏好</span></div>
+            <div class="r"><b>后续任务</b><span>30 天佩戴回访</span></div>
+          </div>
+          <div class="actions"><button class="action" id="finishDeal">生成订单并回写中台</button></div>
+        </div>
+        <div class="result-card">
+          <h3>路径 B · 暂未成交也不失联</h3>
+          <p>顾客没有立刻付款时，系统自动生成“今日试戴清单”电子卡片，由导购确认后通过企微发送。</p>
+          <div class="wechat-card">
+            <b>今日试戴清单 · 企微卡片预览</b>
+            <div class="item"><h4>A 区 3 排 · 小方框钛架</h4><span>推荐理由：厚度更可控，套餐 ¥1,180。</span></div>
+            <div class="item"><h4>B 区 1 排 · TR90 小圆框</h4><span>预算内备选，套餐 ¥980。</span></div>
+            <div class="item"><h4>C 区 2 排 · 细边金属框</h4><span>外观更精致，但需提醒边缘略明显。</span></div>
+          </div>
+          <div class="actions"><button class="action" id="sendWechat">发送企微卡片</button><button class="outline" id="setFollow">设置明日跟进</button></div>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+<div class="toast" id="toast">已完成</div>
+
+<script>
+const $ = (s)=>document.querySelector(s);
+const $$ = (s)=>Array.from(document.querySelectorAll(s));
+const labels = {
+  profile:['验光数据与基础诉求','导购只补充少量关键输入，系统用规则和库存完成专业推荐。'],
+  filter:['硬性规则过滤','先过滤高度近视风险，再从现货库存中做推荐排序。'],
+  recommend:['5 副现货推荐','让导购快速拿货、试戴、讲理由，并根据反馈二次收窄。'],
+  pricing:['智能算账','不问顾客是否接受平替，系统自动给推荐、预算内、升级三档方案。'],
+  talk:['话术提词器','把专业解释压缩成导购能直接说的三行话术。'],
+  close:['成交与离店留存','成交则回写订单，未成交则生成电子试戴清单和跟进任务。']
+};
+const options = {
+  budget:['¥600 以下','¥600–999','¥1000–1499','¥1500–1999','¥2000 以上','自定义 ¥800–1200'],
+  scene:['日常上学','办公网课','夜间驾驶','运动户外','老花远近切换'],
+  preference:['轻薄不显厚','舒适不压鼻','低调百搭','显脸小','耐用好打理','时尚有设计感','无明显偏好']
+};
+const selected = {
+  budget:'自定义 ¥800–1200',
+  scene:['日常上学','办公网课'],
+  preference:['轻薄不显厚','舒适不压鼻'],
+  source:'manual'
+};
+const products = [
+  {id:'A',name:'A 区 3 排 · 小方框钛架',score:92,price:'¥1,180',loc:'A 区 3 排 4 号柜',lens:'1.74 高折射率镜片',stock:'现货 2 副',reason:'小框型可减少边缘厚度，钛架更轻，适合 -8.00D。',warn:'预算刚好压线，需讲清厚度和重量收益。',tags:['小框','钛架','1.74','主推']},
+  {id:'B',name:'B 区 1 排 · TR90 小圆框',score:88,price:'¥980',loc:'B 区 1 排 2 号柜',lens:'1.67 高折射率镜片',stock:'现货 3 副',reason:'轻量、预算友好，适合作为预算内备选方案。',warn:'边缘厚度会比 1.74 方案略明显。',tags:['轻量','预算内','小圆框']},
+  {id:'C',name:'C 区 2 排 · 细边金属框',score:81,price:'¥1,090',loc:'C 区 2 排 1 号柜',lens:'1.74 可选',stock:'现货 1 副',reason:'外观更精致，适合低调百搭需求。',warn:'金属框需提醒鼻托调校，避免压鼻梁。',tags:['低调','金属','现货']},
+  {id:'D',name:'A 区 5 排 · 小椭圆板材框',score:79,price:'¥860',loc:'A 区 5 排 3 号柜',lens:'1.67 高折射率镜片',stock:'现货 2 副',reason:'框型较小，价格友好，适合学生日常上课。',warn:'板材框稍厚，需现场试戴看脸型。',tags:['学生','低价','小框']},
+  {id:'E',name:'D 区 1 排 · 轻商务半框',score:74,price:'¥1,260',loc:'D 区 1 排 5 号柜',lens:'1.74 高折射率镜片',stock:'现货 1 副',reason:'视觉更轻，适合希望成熟一点的学生。',warn:'半框对装配要求更高，需要验配师确认。',tags:['半框','轻商务','需确认']},
+  {id:'F',name:'B 区 4 排 · 轻量小矩形框',score:76,price:'¥1,080',loc:'B 区 4 排 6 号柜',lens:'1.74 可选',stock:'现货 2 副',reason:'框宽较小、重量可控，适合替换被排除的大框类推荐。',warn:'款式偏低调，需看顾客是否觉得普通。',tags:['小矩形','低调','替补']},
+  {id:'G',name:'C 区 4 排 · 学院风小框',score:73,price:'¥930',loc:'C 区 4 排 2 号柜',lens:'1.67 高折射率镜片',stock:'现货 1 副',reason:'学生感更强，价位更友好，适合排除成熟款后补位。',warn:'1.67 镜片边缘会略明显，需提前说明。',tags:['学院风','预算内','替补']}
+];
+let currentProduct = products[0];
+let compareList = [];
+let excludedList = [];
+let currentTalk = 'need';
+function toast(text){const el=$('#toast'); el.textContent=text; el.classList.add('show'); setTimeout(()=>el.classList.remove('show'),1700)}
+function switchView(id){
+  $$('.view').forEach(v=>v.classList.remove('active'));
+  $('#'+id).classList.add('active');
+  $$('.nav button').forEach(b=>b.classList.toggle('active',b.dataset.view===id));
+  $$('.step').forEach(s=>s.classList.toggle('active',s.dataset.step===id));
+  $('#pageTitle').textContent = labels[id][0];
+  $('#pageSub').textContent = labels[id][1];
+}
+function renderPills(){
+  const pills = [$('#rSph').value, selected.budget, ...selected.scene, ...selected.preference];
+  $('#summaryPills').innerHTML = pills.map(p=>`<span class="pill">${p}</span>`).join('');
+  $('#custDesc').textContent = `高度近视｜${selected.budget.replace('自定义 ','')}｜${selected.scene.join('/')}｜${selected.preference.join('/')}`;
+  $('#sumBudget').textContent = selected.budget;
+  $('#sumScene').textContent = selected.scene.join(' / ');
+  $('#sumPreference').textContent = selected.preference.join(' / ');
+}
+function renderOptions(){
+  Object.keys(options).forEach(group=>{
+    const box = $(`[data-group="${group}"]`);
+    box.innerHTML='';
+    options[group].forEach(opt=>{
+      const btn=document.createElement('button');
+      const isSelected = Array.isArray(selected[group]) ? selected[group].includes(opt) : selected[group]===opt;
+      btn.className='seg'+(isSelected?' selected':'');
+      btn.textContent=opt;
+      btn.onclick=()=>{
+        if(group==='budget') selected[group]=opt;
+        else{
+          const arr=selected[group];
+          if(arr.includes(opt)) selected[group]=arr.filter(x=>x!==opt);
+          else if(arr.length<2) arr.push(opt);
+          else {arr.shift(); arr.push(opt)}
+        }
+        renderOptions(); renderPills();
+      };
+      box.appendChild(btn);
+    });
+  });
+}
+function activeProducts(){
+  return products.filter(p=>!excludedList.some(x=>x.id===p.id)).slice(0,5);
+}
+function renderProducts(){
+  const visible = activeProducts();
+  if(!visible.some(p=>p.id===currentProduct.id)) currentProduct = visible[0] || products[0];
+  const box=$('#recoCards'); box.innerHTML='';
+  visible.forEach(p=>{
+    const card=document.createElement('div');
+    card.className='glass-card'+(p.id===currentProduct.id?' selected':'');
+    card.innerHTML=`<div class="score">${p.score}</div><div class="glass-img"><div class="glasses"><i></i></div></div><h3>${p.name}</h3><div class="meta">${p.tags.map(t=>`<span>${t}</span>`).join('')}</div><p>${p.reason}</p><div class="card-actions"><button data-action="talk">查看话术</button><button data-action="compare">加入对比</button><button data-action="exclude">排除类似款</button></div>`;
+    card.onclick=(e)=>{
+      const action=e.target.dataset.action;
+      if(action){
+        e.stopPropagation();
+        currentProduct=p;
+        renderProducts();
+        renderDetail();
+        if(action==='talk'){
+          switchView('talk'); currentTalk='pro'; updateTalkActive(); renderTalk();
+          toast('已跳转到该款专属话术');
+        }
+        if(action==='compare') addCompare(p);
+        if(action==='exclude') openExcludeSheet(p);
+        return;
+      }
+      currentProduct=p; renderProducts(); renderDetail();
+    };
+    box.appendChild(card);
+  });
+  renderCompareTray();
+  renderExcludeLog();
+}
+function renderDetail(){
+  $('#detailName').textContent=currentProduct.name;
+  $('#detailPrice').innerHTML=`${currentProduct.price}<small>套餐预估</small>`;
+  $('#detailLoc').textContent=currentProduct.loc;
+  $('#detailLens').textContent=currentProduct.lens;
+  $('#detailStock').textContent=currentProduct.stock;
+  $('#detailReason').textContent=currentProduct.reason;
+  $('#detailWarn').textContent=currentProduct.warn;
+  $('#planRecoName').textContent=currentProduct.name.split('· ')[1] + ' + 1.74 镜片';
+  $('#dealSku').textContent=currentProduct.name;
+}
+function addCompare(p){
+  if(compareList.some(x=>x.id===p.id)){
+    toast('这副已经在对比栏里');
+  }else if(compareList.length>=3){
+    toast('对比栏最多放 3 副，请先移除一副');
+  }else{
+    compareList.push(p);
+    toast('已加入对比栏，可横向讲解差异');
+  }
+  renderCompareTray();
+  const panel=$('#comparePanel'); if(panel) panel.scrollIntoView({behavior:'smooth',block:'start'});
+}
+function removeCompare(id){
+  compareList = compareList.filter(p=>p.id!==id);
+  renderCompareTray();
+  toast('已从对比栏移除');
+}
+function renderCompareTray(){
+  const box=$('#compareTray'); if(!box) return;
+  const slots=[];
+  compareList.forEach(p=>{
+    slots.push(`<div class="compare-slot"><b>${p.name}</b><div class="cp-price">${p.price}</div><div class="cp-meta">${p.tags.join(' · ')}<br>${p.reason}</div><button class="remove" data-remove="${p.id}">移除</button></div>`);
+  });
+  for(let i=compareList.length;i<3;i++) slots.push(`<div class="compare-slot">待加入第 ${i+1} 副<br>点击镜架卡片上的“加入对比”</div>`);
+  box.innerHTML=slots.join('');
+  box.querySelectorAll('[data-remove]').forEach(btn=>btn.onclick=()=>removeCompare(btn.dataset.remove));
+}
+function openExcludeSheet(p){
+  currentProduct=p;
+  renderDetail();
+  $('#excludeTarget').textContent = `排除：${p.name}`;
+  $('#excludeSheet').classList.add('show');
+  $('#excludePanel').scrollIntoView({behavior:'smooth',block:'start'});
+  toast('请选择排除原因，系统会刷新推荐');
+}
+function excludeCurrent(reason){
+  if(!excludedList.some(x=>x.id===currentProduct.id)) excludedList.push({id:currentProduct.id,name:currentProduct.name,reason});
+  $('#excludeSheet').classList.remove('show');
+  renderProducts();
+  renderDetail();
+  toast('已排除类似款，并补入下一候选');
+}
+function renderExcludeLog(){
+  const box=$('#excludeLog'); if(!box) return;
+  if(!excludedList.length){
+    box.innerHTML='<div class="exclude-item"><b>暂无排除反馈</b><span>试戴后再记录</span></div>';
+    return;
+  }
+  box.innerHTML=excludedList.map(x=>`<div class="exclude-item"><b>${x.name}</b><span>${x.reason}</span></div>`).join('');
+}
+function talkPack(){
+  return {
+    need:`1. 你这个度数最怕镜片边缘厚，所以我们先不看大框，优先看小框。
+2. 你又要上课、网课戴得久，所以重量和鼻梁压力也要一起考虑。
+3. 我先拿 3 副最符合“轻薄不显厚”的现货，你试戴以后我们再看价格方案。`,
+    pro:`1. 同样是 -8.00D，框越大，镜片边缘越容易显厚。
+2. 这副小方框配 1.74 镜片，厚度和重量会更可控。
+3. 不是越贵越好，而是你的度数要先避开大框和低折射率方案。`,
+    price:`1. 这套 ¥1,180 比预算内方案贵一些，主要差在折射率和镜架重量。
+2. 对你这个度数来说，差别会体现在边缘厚度和鼻梁负担上。
+3. 如果预算要压低，我也给你一套 ¥980 的方案，但镜片边缘会稍微明显一点。`,
+    objection:`1. 没关系，今天试过的几副我帮你做成电子清单。
+2. 里面会写清楚每副的价格、适合原因和厚度提醒，你回去可以慢慢比。
+3. 我明天再问你一下，价位或款式想调整的话，我再按你的反馈重新筛。`
+  }
+}
+function renderTalk(){ $('#talkText').value = talkPack()[currentTalk]; }
+$$('.nav button').forEach(b=>b.onclick=()=>switchView(b.dataset.view));
+$$('.step').forEach(s=>s.onclick=()=>switchView(s.dataset.step));
+$$('.source').forEach(s=>s.onclick=()=>{
+  $$('.source').forEach(x=>x.classList.remove('selected'));
+  s.classList.add('selected');
+  selected.source=s.dataset.source;
+  $('#ocrBox').classList.toggle('show',s.dataset.source==='photo');
+  toast(s.dataset.source==='photo'?'已模拟拍照识别，待人工确认':'已切换验光数据来源');
+});
+$('#simulatePhoto').onclick=()=>{document.querySelector('.source[data-source="photo"]').click();};
+$('#startFilter').onclick=()=>switchView('filter');
+$('#toRecommend').onclick=()=>{switchView('recommend'); renderProducts(); renderDetail();};
+$('#backProfile').onclick=()=>switchView('profile');
+$('#toPricing').onclick=()=>switchView('pricing');
+$('#detailCompare').onclick=()=>addCompare(currentProduct);
+$('#dislikeBtn').onclick=()=>openExcludeSheet(currentProduct);
+$('#compareToPricing').onclick=()=>{switchView('pricing'); toast('已带着对比结果进入算账页');};
+$('#clearCompare').onclick=()=>{compareList=[]; renderCompareTray(); toast('已清空对比栏');};
+$$('[data-reason]').forEach(b=>b.onclick=()=>excludeCurrent(b.dataset.reason));
+$('#toTalk').onclick=()=>{switchView('talk'); currentTalk='price'; updateTalkActive(); renderTalk();};
+$('#copyQuote').onclick=()=>toast('报价说明已复制');
+$('#copyTalk').onclick=()=>toast('当前话术已复制');
+$('#toClose').onclick=()=>switchView('close');
+$('#finishDeal').onclick=()=>toast('订单已生成，客户档案已回写中台');
+$('#sendWechat').onclick=()=>toast('企微试戴清单已发送，中台已记录');
+$('#setFollow').onclick=()=>toast('已设置明日 10:00 跟进提醒');
+$('#resetDemo').onclick=()=>{
+  selected.budget='自定义 ¥800–1200'; selected.scene=['日常上学','办公网课']; selected.preference=['轻薄不显厚','舒适不压鼻'];
+  $('#rSph').value='-8.00D'; $('#lSph').value='-7.75D'; $('#cyl').value='-1.00D'; $('#pd').value='62mm';
+  renderOptions(); renderPills(); toast('已恢复示例客户');
+};
+function updateTalkActive(){
+  $$('.talk-tabs button').forEach(b=>b.classList.toggle('active',b.dataset.talk===currentTalk));
+  $$('.scenario').forEach(b=>b.classList.toggle('active',b.dataset.talk===currentTalk));
+}
+$$('.talk-tabs button').forEach(b=>b.onclick=()=>{currentTalk=b.dataset.talk; updateTalkActive(); renderTalk();});
+$$('.scenario').forEach(b=>b.onclick=()=>{currentTalk=b.dataset.talk; updateTalkActive(); renderTalk();});
+['rSph','lSph','cyl','pd'].forEach(id=>$('#'+id).addEventListener('input',renderPills));
+renderOptions(); renderPills(); renderProducts(); renderDetail(); renderTalk();
+</script>
+</body>
+</html>
